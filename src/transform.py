@@ -60,10 +60,10 @@ last_df = load_clinic_data(LAST_YEAR_PATH)
 
 curr_metrics = calculate_summary_metrics(curr_df)
 prev_metrics = calculate_summary_metrics(prev_df)
-last_matrics = calculate_summary_metrics(last_df)
+last_metrics = calculate_summary_metrics(last_df)
 
 curr_prev = calculate_variances(curr_metrics, prev_metrics)
-curr_last = calculate_variances(curr_metrics, last_matrics)
+curr_last = calculate_variances(curr_metrics, last_metrics)
 
-print(curr_prev)
-print(curr_last)
+# print(curr_prev)
+# print(curr_last)
