@@ -51,6 +51,49 @@ def calculate_variances(current_dict, past_dict):
 
     return variances
 
+def calculate_group_rankings(curr_df, prev_df, last_df, category_col):
+    current_ranking = curr_df.groupby(category_col)['Platit'].sum().sort_values(ascending=False)
+    ordered_names = current_ranking.index.tolist()
+
+    results = {}
+
+    for name in ordered_names:
+        curr_revenue_df = curr_df[ curr_df[ category_col ] == name]
+        curr_revenue = curr_revenue_df['Platit'].sum()
+
+        prev_revenue_df = prev_df[ prev_df[ category_col ] == name]
+        prev_revenue = prev_revenue_df['Platit'].sum()
+
+        last_revenue_df = last_df[ last_df[ category_col ] == name]
+        last_revenue = last_revenue_df['Platit'].sum()
+
+        curr_prev_abs = curr_revenue - prev_revenue
+
+        if prev_revenue == 0:
+            curr_prev_prt = 0
+        else:
+            curr_prev_prt = curr_prev_abs / prev_revenue
+
+
+        curr_last_abs = curr_revenue - last_revenue
+        
+        if last_revenue == 0:
+            curr_last_prt = 0
+        else:
+            curr_last_prt = curr_last_abs / last_revenue
+
+        results[name] = {
+            "current": curr_revenue,
+            "prev": prev_revenue,
+            "last": last_revenue,
+            "current previous abs": curr_prev_abs,
+            "current previous prt": curr_prev_prt,
+            "current last abs": curr_last_abs,
+            "current last prt": curr_last_prt
+        }
+
+    return results
+
 from extract import load_clinic_data
 from config import CURRENT_MONTH_PATH, PREV_MONTH_PATH, LAST_YEAR_PATH
 
@@ -64,6 +107,9 @@ last_metrics = calculate_summary_metrics(last_df)
 
 curr_prev = calculate_variances(curr_metrics, prev_metrics)
 curr_last = calculate_variances(curr_metrics, last_metrics)
+
+top_specialitati = calculate_group_rankings(curr_df, prev_df, last_df, 'Nume Coloana Specialitate')
+top_medici = calculate_group_rankings(curr_df, prev_df, last_df, 'Nume Coloana Doctor')
 
 # print(curr_prev)
 # print(curr_last)
