@@ -108,8 +108,8 @@ last_metrics = calculate_summary_metrics(last_df)
 curr_prev = calculate_variances(curr_metrics, prev_metrics)
 curr_last = calculate_variances(curr_metrics, last_metrics)
 
-top_specialitati = calculate_group_rankings(curr_df, prev_df, last_df, 'Nume Coloana Specialitate')
-top_medici = calculate_group_rankings(curr_df, prev_df, last_df, 'Nume Coloana Doctor')
+top_specialitati = calculate_group_rankings(curr_df, prev_df, last_df, 'Specialitate medicala')
+top_medici = calculate_group_rankings(curr_df, prev_df, last_df, 'Doctor')
 
 # print(curr_prev)
 # print(curr_last)
