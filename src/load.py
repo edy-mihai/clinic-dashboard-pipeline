@@ -40,7 +40,7 @@ def fill_dynamic_table(worksheet, data_dict, start_row):
     if rows_to_insert > 0:
         worksheet.insert_rows(start_row + 1, rows_to_insert)
         for i in range(start_row + 1, start_row + rows_to_insert + 1):
-            for j in range(2, 12):
+            for j in range(1, 12):
                 source_cell = worksheet.cell(row=start_row, column=j)
                 target_cell = worksheet.cell(row=i, column=j)
 
@@ -51,8 +51,10 @@ def fill_dynamic_table(worksheet, data_dict, start_row):
                 target_cell.alignment = copy(source_cell.alignment)
 
     current_row = start_row
+    rank = 1
 
     for name, metrics in data_dict.items():
+        worksheet.cell(row=current_row, column=1).value = rank
         worksheet.cell(row=current_row, column=2).value = name
         worksheet.cell(row=current_row, column=4).value = metrics["current"]
         worksheet.cell(row=current_row, column=5).value = metrics["last"]
@@ -63,8 +65,8 @@ def fill_dynamic_table(worksheet, data_dict, start_row):
         worksheet.cell(row=current_row, column=11).value = metrics["current previous prt"]
 
         current_row += 1
+        rank += 1
         
-# INDEX INCEPUT DE RAND PT FIECARE ENTRY LA TOPURI
 
 generate_dashboard(TEMPLATE_PATH, curr_metrics, prev_metrics, last_metrics, curr_prev, curr_last)
     

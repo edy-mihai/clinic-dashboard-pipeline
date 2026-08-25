@@ -13,11 +13,11 @@ def calculate_summary_metrics(df):
     pacienti_noi_df = df[ df['Pacient nou'] == "da" ]
     total_pacienti_noi = pacienti_noi_df['Cod Pacient'].nunique()
 
-    pacienti_platitori_df = df[ df['Platit'] > 0 ]
-    total_pacienti_platitori = pacienti_platitori_df['Cod Pacient'].nunique()
+    patient_totals = df.groupby('Cod Pacient')['Platit'].sum()
 
-    pacienti_neplatitori_df = df[ df['Platit'] == 0 ]
-    total_pacienti_neplatitori = pacienti_neplatitori_df['Cod Pacient'].nunique()
+    total_pacienti_platitori = (patient_totals > 0).sum()
+
+    total_pacienti_neplatitori = (patient_totals == 0).sum()
 
     incasare_medie = total_lei / total_pacienti_platitori
 
