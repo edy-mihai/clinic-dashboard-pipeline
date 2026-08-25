@@ -94,6 +94,88 @@ def calculate_group_rankings(curr_df, prev_df, last_df, category_col):
 
     return results
 
+def calculate_detailed_breakdown(curr_df, prev_df, last_df):
+    current_ranking = curr_df.groupby('Specialitate medicala')['Platit'].sum().sort_values(ascending=False)
+    ordered_names = current_ranking.index.tolist()
+
+    detailed_results = {}
+
+    for name in ordered_names:
+        spec_curr_df = curr_df[ curr_df['Specialitate medicala'] == name ]
+        spec_prev_df = prev_df[ prev_df['Specialitate medicala'] == name ]
+        spec_last_df = last_df[ last_df['Specialitate medicala'] == name ]
+
+        spec_curr_rev = spec_curr_df['Platit'].sum()
+        spec_prev_rev = spec_prev_df['Platit'].sum()
+        spec_last_rev = spec_last_df['Platit'].sum()
+
+        spec_curr_prev_abs = spec_curr_rev - spec_prev_rev
+        
+        if spec_prev_rev == 0:
+            spec_curr_prev_prt = 0
+        else:
+            spec_curr_prev_prt = spec_curr_prev_abs / spec_prev_rev
+        
+        
+        spec_curr_last_abs = spec_curr_rev - spec_last_rev
+        
+        if spec_last_rev == 0:
+            spec_curr_last_prt = 0
+        else:
+            spec_curr_last_prt = spec_curr_last_abs / spec_last_rev
+
+        detailed_results[name] = {
+            "metrics": {
+                "current": spec_curr_rev,
+                "prev": spec_prev_rev,
+                "last": spec_last_rev,
+                "current previous abs": spec_curr_prev_abs,
+                "current previous prt": spec_curr_prev_prt,
+                "current last abs": spec_curr_last_abs,
+                "current last prt": spec_curr_last_prt
+            },
+            "doctors" : {}
+        }
+
+        doctor_current_ranking = spec_curr_df.groupby('Doctor')['Platit'].sum().sort_values(ascending=False)
+        doctor_names = doctor_current_ranking.index.tolist()
+
+        for doctor in doctor_names:
+            doc_curr_df = spec_curr_df[ spec_curr_df['Doctor'] == doctor ]
+            doc_prev_df = spec_prev_df[ spec_prev_df['Doctor'] == doctor ]
+            doc_last_df = spec_last_df[ spec_last_df['Doctor'] == doctor ]
+
+            doc_curr_rev = doc_curr_df['Platit'].sum()
+            doc_prev_rev = doc_prev_df['Platit'].sum()
+            doc_last_rev = doc_last_df['Platit'].sum()
+            
+            doc_curr_prev_abs = doc_curr_rev - doc_prev_rev
+            
+            if doc_prev_rev == 0:
+                doc_curr_prev_prt = 0
+            else:
+                doc_curr_prev_prt = doc_curr_prev_abs / doc_prev_rev
+            
+            
+            doc_curr_last_abs = doc_curr_rev - doc_last_rev
+            
+            if doc_last_rev == 0:
+                doc_curr_last_prt = 0
+            else:
+                doc_curr_last_prt = doc_curr_last_abs / doc_last_rev
+
+            detailed_results[name]["doctors"][doctor] = { 
+                "current": doc_curr_rev,
+                "prev": doc_prev_rev,
+                "last": doc_last_rev,
+                "current previous abs": doc_curr_prev_abs,
+                "current previous prt": doc_curr_prev_prt,
+                "current last abs": doc_curr_last_abs,
+                "current last prt": doc_curr_last_prt
+            }
+
+    return detailed_results
+
 from extract import load_clinic_data
 from config import CURRENT_MONTH_PATH, PREV_MONTH_PATH, LAST_YEAR_PATH
 
@@ -110,6 +192,8 @@ curr_last = calculate_variances(curr_metrics, last_metrics)
 
 top_specialitati = calculate_group_rankings(curr_df, prev_df, last_df, 'Specialitate medicala')
 top_medici = calculate_group_rankings(curr_df, prev_df, last_df, 'Doctor')
+
+detailed_breakdown = calculate_detailed_breakdown(curr_df, prev_df, last_df)
 
 # print(curr_prev)
 # print(curr_last)
