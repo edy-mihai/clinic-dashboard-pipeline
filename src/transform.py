@@ -1,6 +1,12 @@
 import pandas
 from config import EURO_RATE
 
+def clean_clinic_data(df):
+    df.loc[df['Doctor'] == 'CLINICA CLINICA', 'Specialitate medicala'] = 'OBSTETRICA-GINECOLOGIE'
+    df.loc[df['Doctor'] == 'PRODUSE SUPORT', 'Specialitate medicala'] = 'PRODUSE SUPORT'
+
+    return df
+
 def calculate_summary_metrics(df):
     total_lei = df['Platit'].sum()
     total_euro = total_lei / EURO_RATE
@@ -140,6 +146,9 @@ def calculate_detailed_breakdown(curr_df, prev_df, last_df):
         doctor_current_ranking = spec_curr_df.groupby('Doctor')['Platit'].sum().sort_values(ascending=False)
         doctor_names = doctor_current_ranking.index.tolist()
 
+        if name in ['ANALIZE MEDICALE', 'PRODUSE SUPORT']:
+            continue
+
         for doctor in doctor_names:
             doc_curr_df = spec_curr_df[ spec_curr_df['Doctor'] == doctor ]
             doc_prev_df = spec_prev_df[ spec_prev_df['Doctor'] == doctor ]
@@ -183,6 +192,10 @@ curr_df = load_clinic_data(CURRENT_MONTH_PATH)
 prev_df = load_clinic_data(PREV_MONTH_PATH)
 last_df = load_clinic_data(LAST_YEAR_PATH)
 
+curr_df = clean_clinic_data(curr_df)
+prev_df = clean_clinic_data(prev_df)
+last_df = clean_clinic_data(last_df)
+
 curr_metrics = calculate_summary_metrics(curr_df)
 prev_metrics = calculate_summary_metrics(prev_df)
 last_metrics = calculate_summary_metrics(last_df)
@@ -194,6 +207,9 @@ top_specialitati = calculate_group_rankings(curr_df, prev_df, last_df, 'Speciali
 top_medici = calculate_group_rankings(curr_df, prev_df, last_df, 'Doctor')
 
 detailed_breakdown = calculate_detailed_breakdown(curr_df, prev_df, last_df)
+
+# treat database edge cases
+# TAKE CARE OF STORNARI
 
 # print(curr_prev)
 # print(curr_last)

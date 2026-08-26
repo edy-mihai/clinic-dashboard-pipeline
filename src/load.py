@@ -27,8 +27,8 @@ def generate_dashboard(template_path, current_data, prev_data, last_data, prev_v
         ws[f'J{row}'].value = prev_variance[f'diferenta {key}']
         ws[f'K{row}'].value = prev_variance[f'procent diferenta {key}']
 
-    fill_dynamic_table(ws, top_medici, 17)
     fill_dynamic_table(ws, top_specialitati, 13)
+    fill_dynamic_table(ws, top_medici, 13 + len(top_specialitati) + 3)
 
     wb.save(OUTPUT_DIR + "Dashboard_Generated.xlsx")
 
