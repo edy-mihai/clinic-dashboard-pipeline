@@ -104,6 +104,16 @@ def calculate_detailed_breakdown(curr_df, prev_df, last_df):
     current_ranking = curr_df.groupby('Specialitate medicala')['Platit'].sum().sort_values(ascending=False)
     ordered_names = current_ranking.index.tolist()
 
+    if 'PRODUSE SUPORT' in ordered_names:
+        ordered_names.remove('PRODUSE SUPORT')
+        ordered_names.insert(0, 'PRODUSE SUPORT')
+
+    if 'ANALIZE MEDICALE' in ordered_names:
+            ordered_names.remove('ANALIZE MEDICALE')
+            ordered_names.insert(0, 'ANALIZE MEDICALE')
+
+    
+
     detailed_results = {}
 
     for name in ordered_names:
@@ -111,6 +121,7 @@ def calculate_detailed_breakdown(curr_df, prev_df, last_df):
         spec_prev_df = prev_df[ prev_df['Specialitate medicala'] == name ]
         spec_last_df = last_df[ last_df['Specialitate medicala'] == name ]
 
+        # METRICS FOR FIRST ROW (REVENUE)
         spec_curr_rev = spec_curr_df['Platit'].sum()
         spec_prev_rev = spec_prev_df['Platit'].sum()
         spec_last_rev = spec_last_df['Platit'].sum()
@@ -130,15 +141,97 @@ def calculate_detailed_breakdown(curr_df, prev_df, last_df):
         else:
             spec_curr_last_prt = spec_curr_last_abs / spec_last_rev
 
+        # METRICS FOR PATIENTS (NUMBER & AVERAGE)
+        spec_curr_pat = spec_curr_df['Cod Pacient'].nunique()
+        spec_prev_pat = spec_prev_df['Cod Pacient'].nunique()
+        spec_last_pat = spec_last_df['Cod Pacient'].nunique()
+
+        # write a function for these
+        if spec_curr_pat == 0:
+            spec_curr_avg = 0
+        else:
+            spec_curr_avg = spec_curr_rev / spec_curr_pat
+
+        if spec_prev_pat == 0:
+            spec_prev_avg = 0
+        else:        
+            spec_prev_avg = spec_prev_rev / spec_prev_pat
+
+        if spec_last_pat == 0:
+            spec_last_avg = 0
+        else:        
+            spec_last_avg = spec_last_rev / spec_last_pat
+
+
+        spec_curr_prev_pat_abs = spec_curr_pat - spec_prev_pat
+        
+        if spec_prev_pat == 0:
+            spec_curr_prev_pat_prt = 0
+        else:
+            spec_curr_prev_pat_prt = spec_curr_prev_pat_abs / spec_prev_pat
+        
+        
+        spec_curr_last_pat_abs = spec_curr_pat - spec_last_pat
+        
+        if spec_last_pat == 0:
+            spec_curr_last_pat_prt = 0
+        else:
+            spec_curr_last_pat_prt = spec_curr_last_pat_abs / spec_last_pat        
+
+
+
+        spec_curr_prev_avg_abs = spec_curr_avg - spec_prev_avg
+        
+        if spec_prev_avg == 0:
+            spec_curr_prev_avg_prt = 0
+        else:
+            spec_curr_prev_avg_prt = spec_curr_prev_avg_abs / spec_prev_avg
+        
+        
+        spec_curr_last_avg_abs = spec_curr_avg - spec_last_avg
+        
+        if spec_last_avg == 0:
+            spec_curr_last_avg_prt = 0
+        else:
+            spec_curr_last_avg_prt = spec_curr_last_avg_abs / spec_last_avg
+
+
         detailed_results[name] = {
             "metrics": {
+                # SPECIALTY METRICS FIRST ROW
                 "current": spec_curr_rev,
                 "prev": spec_prev_rev,
                 "last": spec_last_rev,
+
                 "current previous abs": spec_curr_prev_abs,
                 "current previous prt": spec_curr_prev_prt,
+
                 "current last abs": spec_curr_last_abs,
-                "current last prt": spec_curr_last_prt
+                "current last prt": spec_curr_last_prt,
+
+
+                # SECOND ROW
+                "current nr patient": spec_curr_pat,
+                "previous nr patient": spec_prev_pat,
+                "last nr patient": spec_last_pat,
+
+                "current previous nr pat abs": spec_curr_prev_pat_abs,
+                "current previous nr pat prt": spec_curr_prev_pat_prt,
+
+                "current last nr pat abs": spec_curr_last_pat_abs,
+                "current last nr pat prt": spec_curr_last_pat_prt,
+
+
+                # THRID ROW
+                "current avg patient": spec_curr_avg,
+                "previous avg patient": spec_prev_avg,
+                "last avg patient": spec_last_avg,
+
+                "current previous avg pat abs": spec_curr_prev_avg_abs,
+                "current previous avg pat prt": spec_curr_prev_avg_prt,
+
+                "current last avg pat abs": spec_curr_last_avg_abs,
+                "current last avg pat prt": spec_curr_last_avg_prt
             },
             "doctors" : {}
         }
@@ -148,8 +241,9 @@ def calculate_detailed_breakdown(curr_df, prev_df, last_df):
 
         if name in ['ANALIZE MEDICALE', 'PRODUSE SUPORT']:
             continue
-
+            
         for doctor in doctor_names:
+            # METRICS FOR DOCTOR REVENUE (FIRST ROW)
             doc_curr_df = spec_curr_df[ spec_curr_df['Doctor'] == doctor ]
             doc_prev_df = spec_prev_df[ spec_prev_df['Doctor'] == doctor ]
             doc_last_df = spec_last_df[ spec_last_df['Doctor'] == doctor ]
@@ -173,14 +267,94 @@ def calculate_detailed_breakdown(curr_df, prev_df, last_df):
             else:
                 doc_curr_last_prt = doc_curr_last_abs / doc_last_rev
 
-            detailed_results[name]["doctors"][doctor] = { 
+
+            # METRICS FOR NR OF PATIENTS (ROW 2 & 3)
+            doc_curr_pat = doc_curr_df['Cod Pacient'].nunique()
+            doc_prev_pat = doc_prev_df['Cod Pacient'].nunique()
+            doc_last_pat = doc_last_df['Cod Pacient'].nunique()
+
+            if doc_curr_pat == 0:
+                doc_curr_avg = 0
+            else:
+                doc_curr_avg = doc_curr_rev / doc_curr_pat
+            
+            if doc_prev_pat == 0:
+                doc_prev_avg = 0
+            else:        
+                doc_prev_avg = doc_prev_rev / doc_prev_pat
+            
+            if doc_last_pat == 0:
+                doc_last_avg = 0
+            else:        
+                doc_last_avg = doc_last_rev / doc_last_pat
+            
+            
+            doc_curr_prev_pat_abs = doc_curr_pat - doc_prev_pat
+            
+            if doc_prev_pat == 0:
+                doc_curr_prev_pat_prt = 0
+            else:
+                doc_curr_prev_pat_prt = doc_curr_prev_pat_abs / doc_prev_pat
+            
+            
+            doc_curr_last_pat_abs = doc_curr_pat - doc_last_pat
+            
+            if doc_last_pat == 0:
+                doc_curr_last_pat_prt = 0
+            else:
+                doc_curr_last_pat_prt = doc_curr_last_pat_abs / doc_last_pat        
+            
+            
+            
+            doc_curr_prev_avg_abs = doc_curr_avg - doc_prev_avg
+            
+            if doc_prev_avg == 0:
+                doc_curr_prev_avg_prt = 0
+            else:
+                doc_curr_prev_avg_prt = doc_curr_prev_avg_abs / doc_prev_avg
+            
+            
+            doc_curr_last_avg_abs = doc_curr_avg - doc_last_avg
+            
+            if doc_last_avg == 0:
+                doc_curr_last_avg_prt = 0
+            else:
+                doc_curr_last_avg_prt = doc_curr_last_avg_abs / doc_last_avg
+
+            
+            detailed_results[name]["doctors"][doctor] = {
+                # FIRST ROW 
                 "current": doc_curr_rev,
                 "prev": doc_prev_rev,
                 "last": doc_last_rev,
+
                 "current previous abs": doc_curr_prev_abs,
                 "current previous prt": doc_curr_prev_prt,
                 "current last abs": doc_curr_last_abs,
-                "current last prt": doc_curr_last_prt
+                "current last prt": doc_curr_last_prt,
+
+                # SECOND ROW
+                "current nr patient": doc_curr_pat,
+                "previous nr patient": doc_prev_pat,
+                "last nr patient": doc_last_pat,
+                
+                "current previous nr pat abs": doc_curr_prev_pat_abs,
+                "current previous nr pat prt": doc_curr_prev_pat_prt,
+                
+                "current last nr pat abs": doc_curr_last_pat_abs,
+                "current last nr pat prt": doc_curr_last_pat_prt,
+                
+                
+                # THRID ROW
+                "current avg patient": doc_curr_avg,
+                "previous avg patient": doc_prev_avg,
+                "last avg patient": doc_last_avg,
+                
+                "current previous avg pat abs": doc_curr_prev_avg_abs,
+                "current previous avg pat prt": doc_curr_prev_avg_prt,
+                
+                "current last avg pat abs": doc_curr_last_avg_abs,
+                "current last avg pat prt": doc_curr_last_avg_prt
             }
 
     return detailed_results

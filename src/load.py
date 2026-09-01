@@ -27,10 +27,14 @@ def generate_dashboard(template_path, current_data, prev_data, last_data, prev_v
         ws[f'J{row}'].value = prev_variance[f'diferenta {key}']
         ws[f'K{row}'].value = prev_variance[f'procent diferenta {key}']
 
-    fill_detailed_table(ws, detailed_breakdown, 23)
+    fill_detailed_table(ws, detailed_breakdown, 22)
     fill_dynamic_table(ws, top_medici, 17)
     fill_dynamic_table(ws, top_specialitati, 13)
-    
+
+    for r in range(14, 100):
+        if ws.cell(row=r, column=2).value == "TOP MEDICI":
+            ws.row_dimensions[r].height = 49.8
+            break
     
     wb.save(OUTPUT_DIR + "Dashboard_Generated.xlsx")
 
@@ -40,7 +44,7 @@ def fill_dynamic_table(worksheet, data_dict, start_row):
     if rows_to_insert > 0:
         worksheet.insert_rows(start_row + 1, rows_to_insert)
         for i in range(start_row + 1, start_row + rows_to_insert + 1):
-            for j in range(1, 12):
+            for j in range(1, 13):
                 source_cell = worksheet.cell(row=start_row, column=j)
                 target_cell = worksheet.cell(row=i, column=j)
 
@@ -54,6 +58,7 @@ def fill_dynamic_table(worksheet, data_dict, start_row):
     rank = 1
 
     for name, metrics in data_dict.items():
+        worksheet.row_dimensions[current_row].height = None
         worksheet.cell(row=current_row, column=1).value = rank
         worksheet.cell(row=current_row, column=2).value = name
         worksheet.cell(row=current_row, column=4).value = metrics["current"]
@@ -66,63 +71,118 @@ def fill_dynamic_table(worksheet, data_dict, start_row):
 
         current_row += 1
         rank += 1
+    
+        
+
+
+def inject_triple_block(worksheet, anchor_row, target_row, entity_name, metrics_dict):
+    for j in range(2, 13):
+
+        # FIRST ROW (NAME)
+
+        source_cell = worksheet.cell(row=anchor_row, column=j)
+        target_cell = worksheet.cell(row=target_row, column=j)
+
+        
+        target_cell.font = copy(source_cell.font)
+        target_cell.border = copy(source_cell.border)
+        target_cell.fill = copy(source_cell.fill)
+        target_cell.number_format = copy(source_cell.number_format)
+        target_cell.alignment = copy(source_cell.alignment)
+
+    worksheet.cell(row=target_row, column=2).value = entity_name
+    worksheet.cell(row=target_row, column=4).value = metrics_dict["current"]
+    worksheet.cell(row=target_row, column=5).value = metrics_dict["last"]
+    worksheet.cell(row=target_row, column=6).value = metrics_dict["prev"]
+    worksheet.cell(row=target_row, column=7).value = metrics_dict["current last abs"]
+    worksheet.cell(row=target_row, column=8).value = metrics_dict["current last prt"]
+    worksheet.cell(row=target_row, column=10).value = metrics_dict["current previous abs"]
+    worksheet.cell(row=target_row, column=11).value = metrics_dict["current previous prt"]
+
+    for j in range(2, 13):
+
+        # SECOND ROW (NR. PACIENTI UNICI)
+
+        source_cell = worksheet.cell(row=anchor_row + 1, column=j)
+        target_cell = worksheet.cell(row=target_row + 1, column=j)
+        
+        
+        target_cell.font = copy(source_cell.font)
+        target_cell.border = copy(source_cell.border)
+        target_cell.fill = copy(source_cell.fill)
+        target_cell.number_format = copy(source_cell.number_format)
+        target_cell.alignment = copy(source_cell.alignment)
+
+    worksheet.cell(row=target_row + 1, column=2).value = f"{entity_name} NR. PACIENTI UNICI"
+    worksheet.cell(row=target_row + 1, column=4).value = metrics_dict["current nr patient"]
+    worksheet.cell(row=target_row + 1, column=5).value = metrics_dict["last nr patient"]
+    worksheet.cell(row=target_row + 1, column=6).value = metrics_dict["previous nr patient"]
+    worksheet.cell(row=target_row + 1, column=7).value = metrics_dict["current last nr pat abs"]
+    worksheet.cell(row=target_row + 1, column=8).value = metrics_dict["current last nr pat prt"]
+    worksheet.cell(row=target_row + 1, column=10).value = metrics_dict["current previous nr pat abs"]
+    worksheet.cell(row=target_row + 1, column=11).value = metrics_dict["current previous nr pat prt"]
+
+    for j in range(2, 13):
+
+        # THIRD ROW (INCASARE/PACIENTI UNICI)
+
+        source_cell = worksheet.cell(row=anchor_row + 2, column=j)
+        target_cell = worksheet.cell(row=target_row + 2, column=j)
+
+
+        target_cell.font = copy(source_cell.font)
+        target_cell.border = copy(source_cell.border)
+        target_cell.fill = copy(source_cell.fill)
+        target_cell.number_format = copy(source_cell.number_format)
+        target_cell.alignment = copy(source_cell.alignment)
+
+    worksheet.cell(row=target_row + 2, column=2).value = f"{entity_name} INCASARE/PACIENTI UNICI"
+    worksheet.cell(row=target_row + 2, column=4).value = metrics_dict["current avg patient"]
+    worksheet.cell(row=target_row + 2, column=5).value = metrics_dict["last avg patient"]
+    worksheet.cell(row=target_row + 2, column=6).value = metrics_dict["previous avg patient"]
+    worksheet.cell(row=target_row + 2, column=7).value = metrics_dict["current last avg pat abs"]
+    worksheet.cell(row=target_row + 2, column=8).value = metrics_dict["current last avg pat prt"]
+    worksheet.cell(row=target_row + 2, column=10).value = metrics_dict["current previous avg pat abs"]
+    worksheet.cell(row=target_row + 2, column=11).value = metrics_dict["current previous avg pat prt"]
 
 def fill_detailed_table(worksheet, data_dict, start_row):
     total_rows = 0
-    for specialty, data in data_dict.items():
-        total_rows += 1
-        total_rows += len(data["doctors"])
 
-    rows_to_insert = total_rows - 2
+    for specialty, data in data_dict.items():
+        num_docs = len(data["doctors"])
+
+        if num_docs == 0:
+            total_rows += 5
+
+        if num_docs > 0:
+            total_rows += 4
+            total_rows += (num_docs * 4) + 1
+
+    rows_to_insert = total_rows - 3
 
     if rows_to_insert > 0:
-        worksheet.insert_rows(start_row + 2, rows_to_insert)
+        worksheet.insert_rows(start_row + 3, rows_to_insert)
 
     current_row = start_row
 
     for specialty, data in data_dict.items():
-        for j in range(2, 12):
-            source_cell = worksheet.cell(row=start_row, column=j)
-            target_cell = worksheet.cell(row=current_row, column=j)
+        num_docs = len(data["doctors"])
 
-            target_cell.font = copy(source_cell.font)
-            target_cell.border = copy(source_cell.border)
-            target_cell.fill = copy(source_cell.fill)
-            target_cell.number_format = copy(source_cell.number_format)
-            target_cell.alignment = copy(source_cell.alignment)
+        inject_triple_block(worksheet, start_row, current_row, specialty, data['metrics'])
 
-        worksheet.cell(row=current_row, column=2).value = specialty
-        worksheet.cell(row=current_row, column=4).value = data["metrics"]["current"]
-        worksheet.cell(row=current_row, column=5).value = data["metrics"]["last"]
-        worksheet.cell(row=current_row, column=6).value = data["metrics"]["prev"]
-        worksheet.cell(row=current_row, column=7).value = data["metrics"]["current last abs"]
-        worksheet.cell(row=current_row, column=8).value = data["metrics"]["current last prt"]
-        worksheet.cell(row=current_row, column=10).value = data["metrics"]["current previous abs"]
-        worksheet.cell(row=current_row, column=11).value = data["metrics"]["current previous prt"]
+        if num_docs == 0:
+            current_row += 5
 
-        current_row += 1
+        if num_docs > 0:
+            current_row += 4
 
-        for doctor, doc_metrics in data["doctors"].items():
-            for j in range(2, 12):
-                source_cell = worksheet.cell(row=start_row + 1, column=j)
-                target_cell = worksheet.cell(row=current_row, column=j)
+        for i, (doctor, doc_metrics) in enumerate(list(data["doctors"].items())):
+            inject_triple_block(worksheet, start_row, current_row, doctor, doc_metrics)
 
-                target_cell.font = copy(source_cell.font)
-                target_cell.border = copy(source_cell.border)
-                target_cell.fill = copy(source_cell.fill)
-                target_cell.number_format = copy(source_cell.number_format)
-                target_cell.alignment = copy(source_cell.alignment)
-
-            worksheet.cell(row=current_row, column=2).value = doctor
-            worksheet.cell(row=current_row, column=4).value = doc_metrics["current"]
-            worksheet.cell(row=current_row, column=5).value = doc_metrics["last"]
-            worksheet.cell(row=current_row, column=6).value = doc_metrics["prev"]
-            worksheet.cell(row=current_row, column=7).value = doc_metrics["current last abs"]
-            worksheet.cell(row=current_row, column=8).value = doc_metrics["current last prt"]
-            worksheet.cell(row=current_row, column=10).value = doc_metrics["current previous abs"]
-            worksheet.cell(row=current_row, column=11).value = doc_metrics["current previous prt"]
-
-            current_row += 1
+            if i == num_docs - 1:
+                current_row += 5
+            else:
+                current_row += 4
                 
 
 generate_dashboard(TEMPLATE_PATH, curr_metrics, prev_metrics, last_metrics, curr_prev, curr_last)
