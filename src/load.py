@@ -2,7 +2,9 @@ from openpyxl import load_workbook
 from config import OUTPUT_DIR, TEMPLATE_PATH
 from transform import curr_metrics, prev_metrics, last_metrics, curr_prev, curr_last, top_medici, top_specialitati, detailed_breakdown
 from copy import copy
-from openpyxl.styles import Border, Side 
+from openpyxl.styles import Border, Side, PatternFill
+
+fill_color = PatternFill(start_color='D9E1F2', end_color='D9E1F2', fill_type='solid')
 
 def generate_dashboard(template_path, current_data, prev_data, last_data, prev_variance, last_year_variance):
     wb = load_workbook(template_path)
@@ -79,7 +81,7 @@ def fill_dynamic_table(worksheet, data_dict, start_row):
         target_cell = worksheet.cell(row=current_row, column=i)
         target_cell.border = Border(left=target_cell.border.left, right=target_cell.border.right, bottom=target_cell.border.bottom, top=top_border)        
 
-def inject_triple_block(worksheet, anchor_row, target_row, entity_name, metrics_dict):
+def inject_triple_block(worksheet, anchor_row, target_row, entity_name, metrics_dict, is_specialty=False):
     for j in range(2, 13):
 
         # FIRST ROW (NAME)
@@ -149,6 +151,11 @@ def inject_triple_block(worksheet, anchor_row, target_row, entity_name, metrics_
     worksheet.cell(row=target_row + 2, column=10).value = metrics_dict["current previous avg pat abs"]
     worksheet.cell(row=target_row + 2, column=11).value = metrics_dict["current previous avg pat prt"]
 
+    if is_specialty == True:
+        worksheet.cell(row=target_row, column=2).fill = fill_color
+    else:
+        worksheet.cell(row=target_row, column=2).fill = PatternFill(fill_type=None)    
+
 def fill_detailed_table(worksheet, data_dict, start_row):
     total_rows = 0
 
@@ -172,7 +179,7 @@ def fill_detailed_table(worksheet, data_dict, start_row):
     for specialty, data in data_dict.items():
         num_docs = len(data["doctors"])
 
-        inject_triple_block(worksheet, start_row, current_row, specialty, data['metrics'])
+        inject_triple_block(worksheet, start_row, current_row, specialty, data['metrics'], is_specialty=True)
 
         if num_docs == 0:
             current_row += 5
