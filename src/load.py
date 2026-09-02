@@ -64,6 +64,7 @@ def fill_dynamic_table(worksheet, data_dict, start_row):
         worksheet.row_dimensions[current_row].height = None
         worksheet.cell(row=current_row, column=1).value = rank
         worksheet.cell(row=current_row, column=2).value = name
+        worksheet.cell(row=current_row, column=3).value = metrics["percent total"]
         worksheet.cell(row=current_row, column=4).value = metrics["current"]
         worksheet.cell(row=current_row, column=5).value = metrics["last"]
         worksheet.cell(row=current_row, column=6).value = metrics["prev"]
@@ -97,6 +98,7 @@ def inject_triple_block(worksheet, anchor_row, target_row, entity_name, metrics_
         target_cell.alignment = copy(source_cell.alignment)
 
     worksheet.cell(row=target_row, column=2).value = entity_name
+    worksheet.cell(row=target_row, column=3).value = metrics_dict["percent total"]
     worksheet.cell(row=target_row, column=4).value = metrics_dict["current"]
     worksheet.cell(row=target_row, column=5).value = metrics_dict["last"]
     worksheet.cell(row=target_row, column=6).value = metrics_dict["prev"]
@@ -120,6 +122,7 @@ def inject_triple_block(worksheet, anchor_row, target_row, entity_name, metrics_
         target_cell.alignment = copy(source_cell.alignment)
 
     worksheet.cell(row=target_row + 1, column=2).value = f"{entity_name} NR. PACIENTI UNICI"
+    worksheet.cell(row=target_row + 1, column=3).value = metrics_dict["percent total pat"]
     worksheet.cell(row=target_row + 1, column=4).value = metrics_dict["current nr patient"]
     worksheet.cell(row=target_row + 1, column=5).value = metrics_dict["last nr patient"]
     worksheet.cell(row=target_row + 1, column=6).value = metrics_dict["previous nr patient"]

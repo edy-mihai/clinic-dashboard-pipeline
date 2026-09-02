@@ -57,7 +57,7 @@ def calculate_variances(current_dict, past_dict):
 
     return variances
 
-def calculate_group_rankings(curr_df, prev_df, last_df, category_col):
+def calculate_group_rankings(curr_df, prev_df, last_df, category_col, grand_total):
     current_ranking = curr_df.groupby(category_col)['Platit'].sum().sort_values(ascending=False)
     ordered_names = current_ranking.index.tolist()
 
@@ -66,6 +66,11 @@ def calculate_group_rankings(curr_df, prev_df, last_df, category_col):
     for name in ordered_names:
         curr_revenue_df = curr_df[ curr_df[ category_col ] == name]
         curr_revenue = curr_revenue_df['Platit'].sum()
+
+        if grand_total != 0:
+            percentage = curr_revenue / grand_total
+        else:
+            percentage = 0    
 
         prev_revenue_df = prev_df[ prev_df[ category_col ] == name]
         prev_revenue = prev_revenue_df['Platit'].sum()
@@ -89,6 +94,7 @@ def calculate_group_rankings(curr_df, prev_df, last_df, category_col):
             curr_last_prt = curr_last_abs / last_revenue
 
         results[name] = {
+            "percent total": percentage,
             "current": curr_revenue,
             "prev": prev_revenue,
             "last": last_revenue,
@@ -100,7 +106,7 @@ def calculate_group_rankings(curr_df, prev_df, last_df, category_col):
 
     return results
 
-def calculate_detailed_breakdown(curr_df, prev_df, last_df):
+def calculate_detailed_breakdown(curr_df, prev_df, last_df, grand_total, total_patients):
     current_ranking = curr_df.groupby('Specialitate medicala')['Platit'].sum().sort_values(ascending=False)
     ordered_names = current_ranking.index.tolist()
 
@@ -126,6 +132,11 @@ def calculate_detailed_breakdown(curr_df, prev_df, last_df):
         spec_prev_rev = spec_prev_df['Platit'].sum()
         spec_last_rev = spec_last_df['Platit'].sum()
 
+        if grand_total != 0:
+            spec_percentage = spec_curr_rev / grand_total
+        else:
+            spec_percentage = 0
+
         spec_curr_prev_abs = spec_curr_rev - spec_prev_rev
         
         if spec_prev_rev == 0:
@@ -145,6 +156,11 @@ def calculate_detailed_breakdown(curr_df, prev_df, last_df):
         spec_curr_pat = spec_curr_df['Cod Pacient'].nunique()
         spec_prev_pat = spec_prev_df['Cod Pacient'].nunique()
         spec_last_pat = spec_last_df['Cod Pacient'].nunique()
+
+        if total_patients != 0:
+            spec_percent_patients = spec_curr_pat / total_patients
+        else:
+            spec_percent_patients = 0
 
         # write a function for these
         if spec_curr_pat == 0:
@@ -199,6 +215,7 @@ def calculate_detailed_breakdown(curr_df, prev_df, last_df):
         detailed_results[name] = {
             "metrics": {
                 # SPECIALTY METRICS FIRST ROW
+                "percent total": spec_percentage,
                 "current": spec_curr_rev,
                 "prev": spec_prev_rev,
                 "last": spec_last_rev,
@@ -211,6 +228,7 @@ def calculate_detailed_breakdown(curr_df, prev_df, last_df):
 
 
                 # SECOND ROW
+                "percent total pat": spec_percent_patients,
                 "current nr patient": spec_curr_pat,
                 "previous nr patient": spec_prev_pat,
                 "last nr patient": spec_last_pat,
@@ -251,6 +269,11 @@ def calculate_detailed_breakdown(curr_df, prev_df, last_df):
             doc_curr_rev = doc_curr_df['Platit'].sum()
             doc_prev_rev = doc_prev_df['Platit'].sum()
             doc_last_rev = doc_last_df['Platit'].sum()
+
+            if grand_total != 0:
+                doc_percentage = doc_curr_rev / grand_total
+            else:
+                doc_percentage = 0
             
             doc_curr_prev_abs = doc_curr_rev - doc_prev_rev
             
@@ -272,6 +295,11 @@ def calculate_detailed_breakdown(curr_df, prev_df, last_df):
             doc_curr_pat = doc_curr_df['Cod Pacient'].nunique()
             doc_prev_pat = doc_prev_df['Cod Pacient'].nunique()
             doc_last_pat = doc_last_df['Cod Pacient'].nunique()
+
+            if total_patients != 0:
+                doc_percent_patients = doc_curr_pat / total_patients
+            else:
+                doc_percent_patients = 0
 
             if doc_curr_pat == 0:
                 doc_curr_avg = 0
@@ -323,7 +351,8 @@ def calculate_detailed_breakdown(curr_df, prev_df, last_df):
 
             
             detailed_results[name]["doctors"][doctor] = {
-                # FIRST ROW 
+                # FIRST ROW
+                "percent total": doc_percentage, 
                 "current": doc_curr_rev,
                 "prev": doc_prev_rev,
                 "last": doc_last_rev,
@@ -334,6 +363,7 @@ def calculate_detailed_breakdown(curr_df, prev_df, last_df):
                 "current last prt": doc_curr_last_prt,
 
                 # SECOND ROW
+                "percent total pat": doc_percent_patients,
                 "current nr patient": doc_curr_pat,
                 "previous nr patient": doc_prev_pat,
                 "last nr patient": doc_last_pat,
@@ -377,10 +407,10 @@ last_metrics = calculate_summary_metrics(last_df)
 curr_prev = calculate_variances(curr_metrics, prev_metrics)
 curr_last = calculate_variances(curr_metrics, last_metrics)
 
-top_specialitati = calculate_group_rankings(curr_df, prev_df, last_df, 'Specialitate medicala')
-top_medici = calculate_group_rankings(curr_df, prev_df, last_df, 'Doctor')
+top_specialitati = calculate_group_rankings(curr_df, prev_df, last_df, 'Specialitate medicala', curr_metrics["total lei"])
+top_medici = calculate_group_rankings(curr_df, prev_df, last_df, 'Doctor', curr_metrics["total lei"])
 
-detailed_breakdown = calculate_detailed_breakdown(curr_df, prev_df, last_df)
+detailed_breakdown = calculate_detailed_breakdown(curr_df, prev_df, last_df, curr_metrics["total lei"], curr_metrics["total pacienti unici"])
 
 # treat database edge cases
 # TAKE CARE OF STORNARI
