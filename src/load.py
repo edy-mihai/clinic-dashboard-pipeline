@@ -2,6 +2,7 @@ from openpyxl import load_workbook
 from config import OUTPUT_DIR, TEMPLATE_PATH
 from transform import curr_metrics, prev_metrics, last_metrics, curr_prev, curr_last, top_medici, top_specialitati, detailed_breakdown
 from copy import copy
+from openpyxl.styles import Border, Side 
 
 def generate_dashboard(template_path, current_data, prev_data, last_data, prev_variance, last_year_variance):
     wb = load_workbook(template_path)
@@ -71,9 +72,12 @@ def fill_dynamic_table(worksheet, data_dict, start_row):
 
         current_row += 1
         rank += 1
-    
-        
 
+    top_border = Side(style='medium')
+
+    for i in range(1, 13):
+        target_cell = worksheet.cell(row=current_row, column=i)
+        target_cell.border = Border(left=target_cell.border.left, right=target_cell.border.right, bottom=target_cell.border.bottom, top=top_border)        
 
 def inject_triple_block(worksheet, anchor_row, target_row, entity_name, metrics_dict):
     for j in range(2, 13):
